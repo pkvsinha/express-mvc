@@ -1,0 +1,41 @@
+version: '3'
+services:
+  express-app:
+    image: express-app:latest
+    expose:
+      - "3000"
+    restart: always
+    depends_on:
+      - redis
+    links:
+      - redis
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_HOST= redis
+      - VIRTUAL_HOST=*/app/, */app/*
+    networks: 
+      - webnet
+  redis:
+    image: redis
+    expose:
+      - "6379"
+    volumes:
+      - "redis-data:/data"
+    command: redis-server --appendonly yes
+    networks: 
+      - webnet
+  lbapp:
+    image: dockercloud/haproxy
+    links:
+      - express-app
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    ports:
+      - "8080:80"
+    networks: 
+      - webnet
+networks: 
+  webnet:
+volumes:
+  redis-data:
